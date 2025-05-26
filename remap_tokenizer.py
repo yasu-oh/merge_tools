@@ -40,7 +40,7 @@ def main(
     tok_src  = load_tokenizer(src_model)
     tok_base = load_tokenizer(base_tokenizer)
 
-    src_vocab_dict = tok_src.get_vocab() 
+    src_vocab_dict = tok_src.get_vocab()
     src_vocab_list = list(src_vocab_dict.keys())
     base_vocab_set = set(tok_base.get_vocab().keys())
     extra_tokens: List[str] = [t for t in src_vocab_list if t not in base_vocab_set]
