@@ -94,11 +94,12 @@ def main(
                     new_embed[base_id] = embed[src_id]
                     new_lm[base_id]    = lm[src_id]
         else:
-            id_map = torch.empty(len(tok_src), dtype=torch.long, device=embed.device)
+            id_map = torch.full((len(tok_src),), -1, dtype=torch.long, device=embed.device)
             for src_id in range(len(tok_src)):
                 token = tok_src.convert_ids_to_tokens(src_id)
-                id_map[src_id] = tok_base.convert_tokens_to_ids(token)
-            assert (id_map >= 0).all(), "Some tokens still unresolved!"
+                dst_id = tok_base.convert_tokens_to_ids(token)
+                id_map[src_id] = dst_id if dst_id is not None else -1
+            assert (id_map >= 0).all(), "Some tokens unresolved in the base tokenizer!"
 
             new_embed[id_map] = embed
             new_lm[id_map]    = lm
@@ -106,6 +107,8 @@ def main(
         model.set_input_embeddings(torch.nn.Embedding.from_pretrained(new_embed, freeze=False))
         model.lm_head.weight = torch.nn.Parameter(new_lm)
         model.config.vocab_size = new_vocab_size
+        if hasattr(model, "tie_weights"):
+            model.tie_weights()
 
     # 4. save ----------------------------------------------------------------------
     print(f"Saving remapped model + tokenizer to {out_dir}")
