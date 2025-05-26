@@ -10,7 +10,7 @@ Currently the repo contains two self-contained CLI scripts:
 | `compare_tokenizers.py` | Report ID-to-token mismatches between two tokenizers |
 | `remap_tokenizer.py`    | Realign a model’s `embedding` + `lm_head` rows to match a base tokenizer (with an option to **drop** or **append** extra tokens) |
 
-Both are pure-Python (≈100 LoC each) and depend only on `transformers >= 4.37` and `torch`.
+Both are pure-Python and depend only on `transformers >= 4.37` and `torch`.
 
 ## Installation
 
@@ -43,9 +43,9 @@ Keeps **all** original vectors; missing tokens are appended to the base tokenize
 
 ```bash
 python remap_tokenizer.py \
-    --src_model   tokyotech-llm/Llama-3.3-Swallow-70B-Instruct-v0.4 \
-    --base_tok    perplexity-ai/r1-1776-distill-llama-70b \
-    --out_dir     ./swallow-r1-tokenfixed
+    --src_model tokyotech-llm/Llama-3.3-Swallow-70B-Instruct-v0.4 \
+    --base_tokenizer perplexity-ai/r1-1776-distill-llama-70b \
+    --out_dir ./swallow-r1-tokenfixed
 ```
 
 Result:
@@ -58,9 +58,9 @@ Use this when you **must** keep the final vocab identical to the base tokenizer 
 
 ```bash
 python remap_tokenizer.py \
-    --src_model   tokyotech-llm/Llama-3.3-Swallow-70B-Instruct-v0.4 \
-    --base_tok    perplexity-ai/r1-1776-distill-llama-70b \
-    --out_dir     ./swallow-pruned \
+    --src_model tokyotech-llm/Llama-3.3-Swallow-70B-Instruct-v0.4 \
+    --base_tokenizer perplexity-ai/r1-1776-distill-llama-70b \
+    --out_dir ./swallow-pruned \
     --drop-extra
 ```
 
@@ -92,7 +92,7 @@ parameters:
 ```
 
 ```bash
-mergekit-yaml --cuda merge.yaml ./merged-r1-70b
+mergekit-yaml --cuda --copy-tokenizer merge.yaml ./merged-r1-70b
 ```
 
 The final checkpoint **shares the tokenizer and chat templates of R-1**—no extra files to ship.
@@ -103,7 +103,7 @@ The final checkpoint **shares the tokenizer and chat templates of R-1**—no ext
 HF `transformers` does not support arbitrary ID remapping at runtime; the fast-tokenizer assumes contiguous IDs. Weight-level realignment is therefore the simplest, 100 % compatible solution.
 
 ### What happens if the model samples a token that the tokenizer doesn’t know?
-With `--drop-extra` this cannot happen—the vocab sizes are identical. Without it, unknown IDs will be decoded as `<unk>`, leading to garbled output. See issues #n/a for a deeper discussion.
+With `--drop-extra` this cannot happen—the vocab sizes are identical. Without it, unknown IDs will be decoded as `<unk>`, leading to garbled output.
 
 ## 5 · License
 
