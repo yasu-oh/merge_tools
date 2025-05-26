@@ -2,15 +2,15 @@
 """
 Remap a source HF causal-LM checkpoint so that its embedding / lm_head rows
 follow *base_tokenizer*'s vocabulary order.  Any tokens missing from the base
-tokenizer are appended at the end and their trained vectors are copied over,
-so no information is lost.
+tokenizer are either dropped (with --drop-extra) or appended to the end.
 
 Usage
 -----
 python remap_tokenizer.py \
     --src_model  tokyotech-llm/Llama-3.3-Swallow-70B-Instruct-v0.4 \
     --base_tokenizer meta-llama/Llama-3.3-70B-Instruct \
-    --out_dir   ./swallow-tokenfixed
+    --out_dir   ./swallow-tokenfixed \
+    [--drop-extra]
 """
 
 from typing import List
@@ -46,8 +46,11 @@ def main(
     extra_tokens: List[str] = [t for t in src_vocab_list if t not in base_vocab_set]
 
     if drop_extra:
-        print(f"Pruning {len(extra_tokens)} tokens not present in base tokenizer "
-              f"(new size = {len(tok_base)})")
+        print(f"Pruning {len(extra_tokens)} tokens not present in base tokenizer (vocab size remains {len(tok_base)})")
+        if extra_tokens:
+            print("Dropped tokens:")
+            for token in extra_tokens:
+                print(f"  {token}")
     else:
         if extra_tokens:
             n_added = tok_base.add_tokens(extra_tokens)
@@ -115,21 +118,19 @@ def main(
     model.save_pretrained(out_dir, safe_serialization=True, max_shard_size=shard_size)
     tok_base.save_pretrained(out_dir)
 
-    with open(os.path.join(out_dir, "remap_info.json"), "w") as f:
-        json.dump(
-            dict(
-                src_model=src_model,
-                base_tokenizer=base_tokenizer,
-                extra_tokens=0 if drop_extra else len(extra_tokens),
-                dropped_tokens=len(extra_tokens) if drop_extra else 0,
-            ),
-            f,
-            indent=2,
-            ensure_ascii=False,
-        )
+    info = dict(
+        src_model=src_model,
+        base_tokenizer=base_tokenizer,
+        extra_tokens=0 if drop_extra else len(extra_tokens),
+        dropped_tokens=len(extra_tokens) if drop_extra else 0,
+    )
+    if drop_extra:
+        info["dropped_token_list"] = extra_tokens
 
-    print("Done!  You can now merge this checkpoint with any other model that "
-          "shares the same tokenizer (or the pruned version).")
+    with open(os.path.join(out_dir, "remap_info.json"), "w") as f:
+        json.dump(info, f, indent=2, ensure_ascii=False)
+
+    print("Done! You can now merge this checkpoint with any other model that shares the same tokenizer (or the pruned version).")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -145,8 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", default="cpu",
                         help="'cpu', 'cuda', or accelerator device id")
     parser.add_argument("--drop-extra", action="store_true",
-                        help="Do NOT add missing tokens to base tokenizer; "
-                             "instead drop them from the model")
+                        help="Do NOT add missing tokens to base tokenizer; instead drop them from the model and list them.")
     args = parser.parse_args()
 
     main(
