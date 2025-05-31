@@ -73,7 +73,7 @@ def main(
     else:
         if extra_tokens:
             n_added = tokenizer_base.add_tokens(extra_tokens)
-            print(f"Added {n_added} tokens to base tokenizer (new size = {tokenizer_base.vocab_size}).")
+            print(f"Added {n_added} tokens to base tokenizer (new size = {len(tokenizer_base)}).")
         else:
             print("No extra tokens needed; vocabularies already aligned.")
 
@@ -90,10 +90,10 @@ def main(
 
     embed_weights = model.get_input_embeddings().weight  # [orig_vocab_size, hidden_dim]
     lm_weights = model.lm_head.weight  # [orig_vocab_size, hidden_dim]
-    hidden_dim = embed_weights.size(1)
+    hidden_dim = embed_weights.shape[1]
 
     # 3. Build new embedding and lm_head ----------------------------------------
-    new_vocab_size = tokenizer_base.vocab_size
+    new_vocab_size = len(tokenizer_base)
     device_embed = embed_weights.device
     dtype_embed = embed_weights.dtype
 
@@ -123,7 +123,7 @@ def main(
                     new_lm[base_id] = lm_weights[src_id]
         else:
             # Build a mapping from source IDs to their new positions in base
-            src_vocab_size = tokenizer_src.vocab_size
+            src_vocab_size = len(tokenizer_src)
             id_map = torch.full((src_vocab_size,), -1, dtype=torch.long, device=device_embed)
             for src_id in range(src_vocab_size):
                 token_str = tokenizer_src.convert_ids_to_tokens(src_id)
