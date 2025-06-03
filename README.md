@@ -20,7 +20,7 @@ python -m venv .venv && source .venv/bin/activate
 
 pip install --upgrade pip
 pip install torch transformers==4.*  # pick the CUDA build you need
-````
+```
 
 No other packages are required.
 
