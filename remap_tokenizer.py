@@ -128,8 +128,15 @@ def main(
                 token_str = tokenizer_src.convert_ids_to_tokens(src_id)
                 dst_id = tokenizer_base.convert_tokens_to_ids(token_str)
                 if dst_id is None or dst_id < 0:
-                    raise ValueError(f"Token '{token_str}' (id={src_id}) cannot be mapped to base tokenizer.")
+                    raise ValueError(
+                        f"Token '{token_str}' (id={src_id}) cannot be mapped to base tokenizer."
+                    )
                 id_map[src_id] = dst_id
+
+            # Initialize all rows with the unknown vector in case the base tokenizer
+            # contains tokens that are absent from the source model
+            new_embed[:] = unk_vec_embed
+            new_lm[:] = unk_vec_lm
 
             # Scatter the embeddings and lm weights to new tensors
             new_embed[id_map] = embed_weights
