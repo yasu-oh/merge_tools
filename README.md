@@ -51,6 +51,7 @@ python remap_tokenizer.py \
 Result:
 
 * `./swallow-r1-tokenfixed/` contains a re-sharded `safetensors` model and a **patched tokenizer** whose vocab size ≥ R1.
+* Base tokens that were missing from the source model are initialized with the `<unk>` vector.
 
 ### 2.2 Drop-mode (`--drop-extra`)
 
