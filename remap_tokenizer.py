@@ -24,13 +24,12 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def load_tokenizer(name_or_path: str) -> AutoTokenizer:
     """
-    AutoTokenizer wrapper that attempts to load with fast=False if necessary.
     Enables remote code execution.
     """
     try:
-        return AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True, use_fast=False)
-    except TypeError:
         return AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load tokenizer '{name_or_path}': {e}")
 
 
 def main(
