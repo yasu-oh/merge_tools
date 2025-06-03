@@ -29,7 +29,7 @@ def load_tokenizer(name_or_path: str) -> AutoTokenizer:
     try:
         return AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
     except Exception as e:
-        raise RuntimeError(f"Failed to load tokenizer '{name_or_path}') from e
+        raise RuntimeError(f"Failed to load tokenizer '{name_or_path}'") from e
 
 
 def main(
